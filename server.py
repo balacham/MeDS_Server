@@ -7,25 +7,42 @@ import threading
 
 SERVER_IP = socket.gethostbyname(socket.gethostname())  # local ip of the machine
 SERVER_PORT = 5000  # arbitrary registered port (below 1024 are system ports, cannot use)
+FORMAT = 'utf-8'
+DISCONNECTION = "!DISCONNECT!"
+HEADER = 64
+ACK = "MESSAGE RECEIVED"
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((SERVER_IP, SERVER_PORT))
 
-def run():
+# main function that establishes new connections
+def server_start():
     print("Starting...")
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER_IP}") 
     while True:
-        connection, address = server.accept()
-        thread = threading.Thread(target=client_side, args = (connection, address))
+        # blocking line, creates a new thread when a new conneciton is established
+        conn, addr = server.accept()
+        thread = threading.Thread(target=client_side, args = (conn, addr))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.activeCount() - 1}")
 
-def client_side(connection, address):
-    print(f"[NEW CONNECTION] {address} connected.")
+
+# method to handle incoming client, runs in its own thread
+def client_side(conn, addr):
+    # conn = connection, addr = address
+    print(f"[NEW CONNECTION] {addr} connected.")
 
     connected = True
     while connected:
-        
+        message_len = conn.recv(HEADER).decode(FORMAT)
+        if message_len:
+            message_len = int(message_len)
+            message = conn.recv(message_len).decode(FORMAT)
+            if message == DISCONNECTION:
+                connected = False
 
-run()
+            print(f"[{addr}] {message}")
+            conn.send(ACK.encode(FORMAT))
+
+server_start()

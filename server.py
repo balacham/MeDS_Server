@@ -44,5 +44,6 @@ def client_side(conn, addr):
 
             print(f"[{addr}] {message}")
             conn.send(ACK.encode(FORMAT))
+    conn.close()
 
 server_start()

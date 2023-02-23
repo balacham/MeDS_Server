@@ -3,7 +3,7 @@
 
 import socket
 
-SERVER_IP = 5  # placeholder
+SERVER_IP =  '10.186.117.77' # placeholder
 SERVER_PORT = 5000  # arbitrary registered port (below 1024 are system ports, cannot use)
 FORMAT = 'utf-8'
 DISCONNECTION = "!DISCONNECT!"
@@ -17,7 +17,7 @@ def send_message(msg):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     size_send = str(msg_length).encode(FORMAT)
-    size_send = += b' ' * (HEADER - len(size_send))
+    size_send += b' ' * (HEADER - len(size_send))
     client.send(size_send)
     client.send(message)
     print(client.recv(2048).decode(FORMAT))

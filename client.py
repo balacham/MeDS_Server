@@ -3,8 +3,8 @@
 
 import socket
 
-SERVER_IP =  '10.186.117.77' # placeholder
-SERVER_PORT = 5000  # arbitrary registered port (below 1024 are system ports, cannot use)
+SERVER_IP =  '10.186.127.7' # placeholder
+SERVER_PORT = 5050  # arbitrary registered port (below 1024 are system ports, cannot use)
 FORMAT = 'utf-8'
 DISCONNECTION = "!DISCONNECT!"
 HEADER = 64

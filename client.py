@@ -3,11 +3,11 @@
 
 import socket
 
-SERVER_IP =  '10.186.127.7' # placeholder
+SERVER_IP =  '100.69.70.61' # placeholder
 SERVER_PORT = 5050  # arbitrary registered port (below 1024 are system ports, cannot use)
 FORMAT = 'utf-8'
 DISCONNECTION = "!DISCONNECT!"
-HEADER = 64
+HEADER = 4
 ACK = "MESSAGE RECEIVED"
 
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

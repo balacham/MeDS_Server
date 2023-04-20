@@ -33,6 +33,7 @@ lock = threading.Lock()
 # slot quantity
 # pill schedule
 
+dispESP = "0000"
 quantity = [0 for i in range(4)]
 dispQuant = [0 for i in range(4)]
 schedule = [[] for i in range(4)]
@@ -45,6 +46,7 @@ def client_side(conn, addr):
     global quantity
     global dispQuant
     global schedule
+    global dispESP
 
     # conn = connection, addr = address
     print(f"[NEW CONNECTION] {addr} connected.")
@@ -66,11 +68,9 @@ def client_side(conn, addr):
 
         # message = "Slot #: 1, Pills: 120, Hour Cycle: 12, Schedule: 1 Pill Starting @ 8AM"
 
-        # decodeList = [slot #, # pills, hour cycle, # pills to dispense, start time]
+        # decodeList = [slot #, # pills, hour cycle, # pills to dispense, start time hour, start time minutes]
         decodeList = re.findall(r"[0-9]+", message)
-
-        timelength = len(decodeList[4])
-        onTheHour = (timelength < 3)
+        decodeList[4] = decodeList[4] + decodeList[5]
 
         decodeList = [int(x) for x in decodeList]
         # A for am, P for pm
@@ -80,14 +80,16 @@ def client_side(conn, addr):
         # multiply by 100
         # if onTheHour:
         if amPM == "A":
-            if decodeList[4] != 12:
-                startTime = decodeList[4] * 100
-            # else set to 0 by default
-        elif amPM == 'P':
-            if decodeList[4] != 12:
-                startTime = decodeList[4] * 100 + 1200
+            if decodeList[4] < 1200:
+                startTime = decodeList[4]
+            # else set to 0 by default, where 0 is 00:00
             else:
-                startTime = 1200  # 1200 is 12 pm
+                startTime = decodeList[4] - 1200
+        elif amPM == 'P':
+            if decodeList[4] < 1200:
+                startTime = decodeList[4] + 1200
+            else:
+                startTime = decodeList[4]  # 1200 is 12 pm
         else:
             print("RUN FOR THE HILLS! WERE ON THE HOUR!!")
         # else:
@@ -151,38 +153,74 @@ def client_side(conn, addr):
         # message = "Slot #: 1, Pills: 120, Hour Cycle: 12, Schedule: 1 Pill Starting @ 8AM"
         # decodeList = [slot #, # pills, hour cycle, # pills to dispense, start time]
         decodeList = re.findall(r"[0-9]+", message)
+        decodeList[4] = decodeList[4] + decodeList[5]
+
+        decodeList = [int(x) for x in decodeList]
 
         slot = decodeList[0]
         print("Dispense on slot #: ", slot)
-        # match message:
-        #     case "0001":
-        #         # dispense on slot 1
-        #         print("disp on 1")
-        #     case "0002":
-        #         print("disp on 2")
-        #     case "0003":
-        #         print("disp on 3")
-        #     case "0004":
-        #         print("disp on 4")
-        #     case _:
-        #         # default case, error
-        #         print("NOOOOOOOO")
+        lock.acquire()
+        flag = True
+        # "2010"
+        match message:
+            case 1:
+                # dispense on slot 1
+                print("disp on 1")
+                dispESP = "1000"
+            case 2:
+                print("disp on 2")
+                dispESP = "0100"
+            case 3:
+                print("disp on 3")
+                dispESP = "0010"
+            case 4:
+                print("disp on 4")
+                dispESP = "0001"
+            case _:
+                # default case, error
+                print("NOOOOOOOO")
+                dispESP = "0000"
+        lock.release()
 
         conn.close()
         print(f"{addr} connection closed")
 
     elif tmp == "mc32":
-        if flag:
-            # print("Input:")
-            # val = input()
-            # conn.send(val.encode(FORMAT))
+        while True:
+            if flag:
+                # instant dispense signal
+                conn.send(dispESP.encode(FORMAT))
+                lock.acquire()
+                flag = False
+                lock.release()
+            else:
+                # regular scheduling 
+                timeString = time.ctime()
+                # timeList = [date, hour, minute, second, year]
+                timeList = re.findall(r"[0-9]+", timeString)
+                timeInt = int(timeList[1] + timeList[2])
 
-            val = input("Waiting...")
-            print("Sending ", message)
-            conn.send(message.encode(FORMAT))
-            y.acquire()
-            flag = 0
-            y.release()
-            time.sleep(5)
+                # if timeInt is in schedule, then modify and send dispense signal
+                schdESP = ""
+                for i in range(4):
+                    if timeInt in schedule[i]:
+                        # need to dispense
+                        quant = dispQuant[i]
+                        quantity[i] -= dispQuant[i]
+
+                        quant = str(quant)
+                        schdESP += quant
+                    else:
+                        # don't need to dispense
+                        schdESP += "0"
+
+                # if something to dispense, then dispense
+                if schdESP != '0000':
+                    conn.send(schdESP.encode(FORMAT))
+
+            time.sleep(30)
+
+
+
 
 server_start()

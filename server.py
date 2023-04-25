@@ -162,7 +162,7 @@ def client_side(conn, addr):
         lock.acquire()
         flag = True
         # "2010"
-        match message:
+        match slot:
             case 1:
                 # dispense on slot 1
                 print("disp on 1")
@@ -189,6 +189,7 @@ def client_side(conn, addr):
         while True:
             if flag:
                 # instant dispense signal
+                print("Instant dispense, sending: ", dispESP)
                 conn.send(dispESP.encode(FORMAT))
                 lock.acquire()
                 flag = False
@@ -217,8 +218,9 @@ def client_side(conn, addr):
                 # if something to dispense, then dispense
                 if schdESP != '0000':
                     conn.send(schdESP.encode(FORMAT))
+                    print("sending to esp: ", scheESP)
 
-            time.sleep(30)
+            time.sleep(60)
 
 
 

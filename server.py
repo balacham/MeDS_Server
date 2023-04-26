@@ -7,14 +7,25 @@ import threading
 import time
 import re
 
-SERVER_IP = socket.gethostbyname(socket.gethostname())  # local ip of the machine
+SERVER_IP = '0.0.0.0' # socket.gethostbyname(socket.gethostname())  # listen on everything
 SERVER_PORT = 5050  # arbitrary registered port (below 1024 are system ports, cannot use)
 FORMAT = 'utf-8'
-DISCONNECTION = "/DISCONNECT/"
+DISCONNECTION = "EXIT"
 HEADER = 4
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((SERVER_IP, SERVER_PORT))
+
+
+flag = False
+lock = threading.Lock()
+# slot quantity
+# pill schedule
+
+dispESP = "0000"
+quantity = [0 for i in range(4)]
+dispQuant = [0 for i in range(4)]
+schedule = [[] for i in range(4)]
 
 # main function that establishes new connections
 def server_start():
@@ -27,16 +38,6 @@ def server_start():
         thread = threading.Thread(target=client_side, args = (conn, addr))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
-
-flag = False
-lock = threading.Lock()
-# slot quantity
-# pill schedule
-
-dispESP = "0000"
-quantity = [0 for i in range(4)]
-dispQuant = [0 for i in range(4)]
-schedule = [[] for i in range(4)]
 
 # method to handle incoming client, runs in its own thread
 def client_side(conn, addr):
@@ -116,15 +117,11 @@ def client_side(conn, addr):
         pillCount = decodeList[1]
         toDisp = decodeList[3]
 
-        print("trying to acquire lock")
-
         lock.acquire()
         quantity[slot] = pillCount
         dispQuant[slot] = toDisp
         schedule[slot] = newSchedule
         lock.release()
-
-        print("lock released")
 
         print("Decoded numbers: ", decodeList)
         print("Quantity by slot #: ", quantity)
@@ -134,14 +131,7 @@ def client_side(conn, addr):
         conn.close()
         print(f"{addr} connection closed")
 
-        # if message == DISCONNECTION:
-        #     connected = False
-        #     break
-
-        # y.acquire()
-        # flag = 1
-        # y.release()
-
+    # instant dispense signal from iphone
     elif tmp == "disp":
         # can incorperate length, up to us
         message_len = conn.recv(HEADER).decode(FORMAT)
@@ -185,17 +175,18 @@ def client_side(conn, addr):
         conn.close()
         print(f"{addr} connection closed")
 
+    # esp 32 logic
     elif tmp == "mc32":
         while True:
+            # instant dispense signal
             if flag:
-                # instant dispense signal
                 print("Instant dispense, sending: ", dispESP)
                 conn.send(dispESP.encode(FORMAT))
                 lock.acquire()
                 flag = False
                 lock.release()
+            # regular scheduling 
             else:
-                # regular scheduling 
                 timeString = time.ctime()
                 # timeList = [date, hour, minute, second, year]
                 timeList = re.findall(r"[0-9]+", timeString)
@@ -221,8 +212,24 @@ def client_side(conn, addr):
                     print("sending to esp: ", scheESP)
 
             time.sleep(60)
+    
+    elif tmp == 'test':
+        while True:
+            message_len = conn.recv(HEADER).decode(FORMAT)
+            # print("Length of message to be recived: ", message_len)
+            message_len = int(message_len)
+            message = conn.recv(message_len).decode(FORMAT)
+            print("Received:", message)
 
-
-
+            if message == DISCONNECTION:
+                conn.close()
+                print(f"{addr} connection closed")
+                break
+            
+    # error of some kind
+    else:
+        print("Unknown identifier, closing socket connection")
+        conn.close()
+        print(f"{addr} connection closed")
 
 server_start()

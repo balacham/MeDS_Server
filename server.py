@@ -6,6 +6,7 @@ import socket
 import threading
 import time
 import re
+import os
 
 SERVER_IP = '0.0.0.0' # socket.gethostbyname(socket.gethostname())  # listen on everything
 SERVER_PORT = 5050  # arbitrary registered port (below 1024 are system ports, cannot use)
@@ -190,6 +191,8 @@ def client_side(conn, addr):
                 lock.release()
             # regular scheduling 
             else:
+                os.environ['TZ'] = 'US/Eastern'
+                time.tzset()
                 timeString = time.ctime()
                 # timeList = [date, hour, minute, second, year]
                 timeList = re.findall(r"[0-9]+", timeString)

@@ -1,6 +1,6 @@
 import socket
 
-SERVER_IP = '127.0.0.1'
+SERVER_IP = '18.218.15.131'
 SERVER_PORT = 5050
 FORMAT = 'utf-8'
 HEADER = 4

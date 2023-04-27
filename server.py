@@ -57,6 +57,9 @@ def client_side(conn, addr):
     tmp = conn.recv(HEADER).decode(FORMAT)
     print(tmp)
 
+    os.environ['TZ'] = 'US/Eastern'
+    time.tzset()
+
     # while connected:
     if tmp == "iapp":
         message_len = conn.recv(HEADER).decode(FORMAT)
@@ -191,8 +194,6 @@ def client_side(conn, addr):
                 lock.release()
             # regular scheduling 
             else:
-                os.environ['TZ'] = 'US/Eastern'
-                time.tzset()
                 timeString = time.ctime()
                 # timeList = [date, hour, minute, second, year]
                 timeList = re.findall(r"[0-9]+", timeString)
@@ -238,7 +239,7 @@ def client_side(conn, addr):
                     conn.send(schdESP.encode(FORMAT))
                     print("sending to esp: ", schdESP)
 
-            time.sleep(5)
+            time.sleep(1)
     
     elif tmp == 'test':
         while True:

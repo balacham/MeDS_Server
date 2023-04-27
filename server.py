@@ -20,6 +20,7 @@ server.bind((SERVER_IP, SERVER_PORT))
 
 flag = False
 lock = threading.Lock()
+threadQuit = False
 # slot quantity
 # pill schedule
 
@@ -30,6 +31,8 @@ schedule = [[] for i in range(4)]
 
 # main function that establishes new connections
 def server_start():
+    global threadQuit
+
     print("Starting...")
     server.listen()
     print(f"[LISTENING] Server is listening on {SERVER_IP}") 
@@ -41,11 +44,16 @@ def server_start():
             thread.start()
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
     except:
-        os._exit()
+        print("Closing")
+        threadQuit = True
+
+        
 
 
 # method to handle incoming client, runs in its own thread
 def client_side(conn, addr):
+    global threadQuit
+
     global flag
     global lock
     
@@ -188,7 +196,7 @@ def client_side(conn, addr):
         # list of scheduled times that are temperarily removed to be added back when the time doesn't match
         tempTime = [None for i in range(4)]
 
-        while True:
+        while not threadQuit:
             # instant dispense signal
             if flag:
                 print("Instant dispense, sending: ", dispESP)
@@ -244,6 +252,8 @@ def client_side(conn, addr):
                     print("sending to esp: ", schdESP)
 
             time.sleep(1)
+        conn.close()
+        print(f"{addr} connection closed")
     
     elif tmp == 'test':
         while True:

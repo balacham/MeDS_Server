@@ -3,7 +3,7 @@ import threading
 import time
 import re
 
-SERVER_IP = socket.gethostbyname(socket.gethostname())  # local ip of the machine
+SERVER_IP = '0.0.0.0'
 SERVER_PORT = 5050  # arbitrary registered port (below 1024 are system ports, cannot use)
 FORMAT = 'utf-8'
 DISCONNECTION = "/DISCONNECT/"

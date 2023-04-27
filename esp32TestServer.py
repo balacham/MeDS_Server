@@ -28,8 +28,7 @@ def server_start():
             thread.start()
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
     except:
-        threadQuit = True
-        print("Closing")
+        os._exit(1)
 
 def client_side(conn, addr):
     global threadQuit

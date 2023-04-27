@@ -46,8 +46,7 @@ def server_start():
     except:
         print("Closing")
         threadQuit = True
-
-        
+        os._exit(1)
 
 
 # method to handle incoming client, runs in its own thread

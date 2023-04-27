@@ -177,6 +177,9 @@ def client_side(conn, addr):
 
     # esp 32 logic
     elif tmp == "mc32":
+        # list of scheduled times that are temperarily removed to be added back when the time doesn't match
+        tempTime = [None for i in range(4)]
+
         while True:
             # instant dispense signal
             if flag:
@@ -194,6 +197,7 @@ def client_side(conn, addr):
 
                 # if timeInt is in schedule, then modify and send dispense signal
                 schdESP = ""
+
                 for i in range(4):
                     if timeInt in schedule[i]:
                         # need to dispense
@@ -202,16 +206,36 @@ def client_side(conn, addr):
 
                         quant = str(quant)
                         schdESP += quant
+
+                        # add to tempTime and remove from schedule
+                        print(schedule)
+                        print("removing from schedule")
+                        tempTime[i] = timeInt
+                        lock.acquire()
+                        schedule[i].remove(timeInt)
+                        lock.release()
+                        print(schedule)
                     else:
                         # don't need to dispense
                         schdESP += "0"
 
+                # re add the removed time to the schedule
+                for i in range(4):
+                    # there is a time to be added and that time is not now
+                    if tempTime[i] != None and timeInt != tempTime[i]:
+                        print("adding back to schedule")
+                        lock.acquire()
+                        schedule[i].append(tempTime[i])
+                        lock.release()
+                        tempTime[i] = None
+                        print(schedule)
+
                 # if something to dispense, then dispense
                 if schdESP != '0000':
                     conn.send(schdESP.encode(FORMAT))
-                    print("sending to esp: ", scheESP)
+                    print("sending to esp: ", schdESP)
 
-            time.sleep(60)
+            time.sleep(5)
     
     elif tmp == 'test':
         while True:

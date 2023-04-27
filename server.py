@@ -40,7 +40,7 @@ def server_start():
             thread = threading.Thread(target=client_side, args = (conn, addr))
             thread.start()
             print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
-    except KeyboardInterrupt:
+    except:
         os._exit()
 
 
